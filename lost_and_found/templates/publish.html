@@ -1,0 +1,149 @@
+{% extends 'base.html' %}
+
+{% block head %}
+    <title>发布中心</title>
+    <style>
+        body {
+            background: url('/static/img/背景.jpg');
+        }
+
+        div.inner {
+            background: none;
+        }
+    </style>
+{% endblock %}
+
+{% block contentPage %}
+    <div class="container">
+        <div class="container pt-5">
+            <form enctype="multipart/form-data" method="post" action="/release/upsert">
+                <input style="display:none;" type="text" name="user" id="user" value="{{ form.user }}"/>
+                <input style="display:none;" type="text" name="id" id="id" value="{{ form.id }}"/>
+                <div class="row mb-3">
+                    <label for="inputEmail3" class="col-sm-2 col-form-label">物品名称：</label>
+                    <div class="col-sm-10">
+                        <input type="text" class="form-control" id="name" name="name" value="{{ form.name }}">
+                    </div>
+                </div>
+                <div class="row mb-3">
+                    <label for="inputPassword3" class="col-sm-2 col-form-label">物品描述：</label>
+                    <div class="col-sm-10">
+                        <textarea class="form-control" id="desc" name="desc"></textarea>
+                    </div>
+                </div>
+                <fieldset class="row mb-3">
+                    <legend class="col-form-label col-sm-2 pt-0">发布类型：</legend>
+                    <div class="col-sm-10">
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="radio" name="release_type" id="release_type1"
+                                   value="1"
+                                   checked
+                                    {% if form.id != 0 %} disabled {% endif %}>
+                            <label class="form-check-label" for="release_type1">
+                                失物招领
+                            </label>
+                        </div>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="radio" name="release_type" id="release_type2"
+                                   value="2"
+                                    {% if form.id != 0 %} disabled {% endif %}>
+                            <label class="form-check-label" for="release_type2">
+                                寻物启事
+                            </label>
+                        </div>
+                    </div>
+
+                </fieldset>
+                <div class="row mb-3">
+                    <label for="event_at" class="col-sm-2 col-form-label time">拾取时间：</label>
+                    <div class="col-sm-10">
+                        <input type="text" class="form-control" id="event_at" name="event_at"
+                               value="{{ form.event_at }}">
+                    </div>
+                </div>
+                <div class="row mb-3">
+                    <label for="event_place" class="col-sm-2 col-form-label place">拾取地点：</label>
+                    <div class="col-sm-10">
+                        <input type="text" class="form-control" id="event_place" name="event_place"
+                               value="{{ form.event_place }}">
+                    </div>
+                </div>
+                <div class="row mb-3">
+                    <label for="formFile" class="col-sm-2 col-form-label">上传照片：</label>
+                    <div class="col-sm-10">
+                        <input class="form-control" type="file" id="image" name="image">
+                    </div>
+                </div>
+
+                {% if form.id == 0 %}
+                    <button type="submit" class="btn btn-primary">发布</button>
+                    <input style="display:none;" type="text" name="status" id="status" value="0"/>
+                {% else %}
+                    <div class="row mb-3">
+                        <label for="formFile" class="col-sm-2 col-form-label">状态：</label>
+                        <div class="col-sm-10">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" name="status" checked/>
+                                <label class="form-check-label">完成</label>
+                            </div>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary">更新</button>
+                {% endif %}
+
+            </form>
+        </div>
+    </div>
+
+    <script>
+        $(function () {
+            let UserInfo = JSON.parse(getCookieValue("user_info"))
+            $("#user").attr("value", UserInfo.id)
+            $("#desc").val("{{ form.desc }}")
+        });
+
+        $('input[type=radio][name=release_type]').on("change", function () {
+            if (this.value == 1) {
+                $(".time").html("拾取时间：");
+                $(".place").html("拾取地点：");
+            }
+            if (this.value == 2) {
+                $(".time").html("丢失时间：");
+                $(".place").html("丢失地点：");
+            }
+        });
+
+        function upload() {
+            let fromData = new FormData
+            event.preventDefault()
+            let UserInfo = JSON.parse(getCookieValue("user_info"))
+            fromData["user"] = UserInfo.id
+            fromData["name"] = document.getElementById("name").value
+            fromData["desc"] = document.getElementById("desc").value
+            fromData["event_at"] = document.getElementById("event_at").value
+            fromData["event_place"] = document.getElementById("event_place").value
+            fromData["image"] = $('#image')[0].files[0]
+            fromData["type"] = $("input[name='release_type']:checked").val()
+            fromData["status"] = "0"
+            console.log(fromData);
+            $.ajax({
+                url: "http://127.0.0.1:8000/release/upsert",
+                method: "POST",
+                dataType: "json",
+                contentType: false,
+                processData: false,
+                data: fromData,
+                xhrFields: {
+                    withCredentials: true
+                },
+            }).done(function (response) {
+                if (response.code === 0) {
+                    alert(response.message)
+                } else {
+                    alert(response.message)
+                }
+            })
+        }
+
+    </script>
+{% endblock %}

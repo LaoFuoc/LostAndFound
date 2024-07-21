@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+
+{% block head %}
+    <title>失物招领</title>
+{% endblock %}
+
+{% block contentPage %}
+    <div class="container">
+        {% for d in data %}
+            <div class="container pt-5">
+                <div class="card mx-auto" style="width:800px">
+                    <img class="card-img-top" src="/media/{{ d.image }}" alt="Card image"
+                         style="width:70%">
+                    <div class="card-body">
+                        <h4 class="card-title">拾取物品：{{ d.name }}</h4>
+                        <p class="card-text">描述：{{ d.desc }}</p>
+                        <div class="row">
+                            <div class="col"><a class="btn btn-primary"
+                                                onclick="detail({{ d.id }})">查看详情</a></div>
+                            <div class="col text-end">
+                                {% if d.status == "0" %}
+                                    <a href="" class="btn btn-warning">未完成</a>
+                                {% elif d.status == "1" %}
+                                    <a href="" class="btn btn-success">已完成</a>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-footer text-muted text-end">
+                        发布时间：{{ d.created_at }}
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+    <script type="text/javascript">
+
+    </script>
+{% endblock %}

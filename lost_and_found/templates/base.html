@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="/static/css/bootstrap.min.css">
+    <script src="/static/js/jquery.min.js"></script>
+    <script src="https://cdn.bootcss.com/popper.js/1.14.7/umd/popper.min.js"></script>
+    <script src="/static/js/bootstrap.min.js"></script>
+    <script src="/static/js/bootstrap.bundle.min.js"></script>
+    <style>
+        div.inner {
+            background: url("/static/img/背景.jpg");
+        }
+
+        header.title {
+            border-bottom: 1px solid #c7c0c0 !important;
+        }
+    </style>
+
+    {% block head %}
+    {% endblock %}
+</head>
+
+<header class="p-3 text-white title" style="background: #f5f2f2;overflow:auto;">
+    <div class="container">
+        <div class="d-flex flex-wrap align-items-center justify-content-center justify-content-lg-start">
+            <ul class="nav col-12 col-lg-auto me-lg-auto mb-2 justify-content-center mb-md-0" style="font-weight: 800;">
+                <li><a href="index" class="nav-link px-2 text-secondary">首页</a></li>
+                <li><a href="found?type=1" class="nav-link px-2 text-secondary">失物招领</a></li>
+                <li><a href="lost?type=2" class="nav-link px-2 text-secondary">寻物启事</a></li>
+                <li><a href="#" class="nav-link px-2 text-secondary" onclick="center()">个人中心</a></li>
+            </ul>
+
+            <form class="d-flex">
+                <input type="search" class="form-control form-control me-2" placeholder="Search..." id="search_name"
+                       aria-label="Search"
+
+                >
+                <button class="btn btn-success me-2" data-bs-toggle="modal"
+                        data-bs-target="#search_result" onclick="to_search()">Search
+                </button>
+
+            </form>
+
+            <div class="text-end" style="color: #0f0f0f">
+                <button class="btn btn-success me-2" style="display: none" type="button" onclick="publish()"
+                        id="publish">发布
+                </button>
+                <div style="margin-left: 1rem; display: none" id="info">
+                    <a href="#" class="d-block link-dark text-decoration-none dropdown-toggle"
+                       id="dropdownUser1"
+                       data-bs-toggle="dropdown" aria-expanded="false">
+                        <img src="/static/img/img.jpeg" alt="mdo" width="32" height="32" class="rounded-circle">
+                    </a>
+                    <ul class="dropdown-menu" aria-labelledby="dropdownUser1">
+                        <li><a class="dropdown-item" href="#" id="h_nick_name"></a></li>
+                        <li><a class="dropdown-item" onclick="out()">退出登录</a></li>
+                    </ul>
+                </div>
+                <button type="button" class="btn btn-outline-success me-2" id="login" onclick="to_login()">Login
+                </button>
+            </div>
+        </div>
+
+        <!-- 搜索结果模态框 -->
+        <div class="modal" id="search_result">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <!-- 模态框头部 -->
+                    <div class="modal-header">
+                        <h4 class="modal-title">搜索结果</h4>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+
+                    <!-- 模态框内容 -->
+                    <div class="modal-body">
+                        <div class="table-responsive">
+                            <table class="table table-striped" id="my_table">
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- 模态框底部 -->
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-danger" data-bs-dismiss="modal">关闭</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</header>
+<body>
+<div class="inner" style="margin-bottom: 3rem">
+    {% block contentPage %}
+    {% endblock %}
+</div>
+</body>
+<script type="text/javascript">
+    // 默认之展示登录和注册按钮，登录成功之后，展示头像和发布、退出登录
+    $(function () {
+        let UserInfo = JSON.parse(getCookieValue("user_info"))
+        console.log(UserInfo);
+        if (UserInfo == "") {
+            return
+        }
+        $("#login").attr("style", "display:none");
+        $("#info").attr("style", "display:inline-block");
+        $("#publish").attr("style", "display:inline-block");
+        $("#h_nick_name").text("Hi~" + UserInfo.nick_name);
+    });
+
+    function checkLogin() {
+        let cookies = getCookieValue("user_info")
+        if (cookies === "") {
+            self.location = "login"
+            return false
+        }
+        let UserInfo = JSON.parse(cookies)
+        if (UserInfo.id === undefined) {
+            self.location = "login"
+            return false
+        }
+        return true
+    }
+
+    function to_search() {
+        event.preventDefault()
+        name = $("#search_name").val()
+        if (name === "") {
+
+        }
+        $("#my_table tbody").empty(); // 搜索前先清空表格
+        $.ajax({
+            "url": "http://127.0.0.1:8000/release/search",
+            "method": "GET",
+            "timeout": 0,
+            "headers": {
+                "Content-Type": "application/json"
+            },
+            "data": {
+                "name": name
+            },
+        }).done(function (response) {
+            console.log(response);
+            res = response.data
+            console.log(res)
+            //清空table中的html
+            $("#my_table").html("<thead class='table-dark'><th scope='col'>物品名称</th><th scope='col'>描述</th><th scope='col'>类型</th><th scope='col'>操作</th>");
+
+            for (var i = 0; i < res.length; i++) {
+                str1 = "<tr>" +
+                    "<td>" + res[i].name + "</td>" +
+                    "<td>" + res[i].desc + "</td>" +
+                    "<td>" + res[i].type + "</td>" +
+                    "<td> <a class='btn btn-primary' onclick='detail(" + res[i].id + ")'>查看详情</a></td>" +
+                    "</tr>";
+                $("#my_table").append(str1);
+            }
+        })
+    }
+
+    function to_login() {
+        self.location = "login"
+    }
+
+    function center() {
+        if (checkLogin()) {
+            let UserInfo = JSON.parse(getCookieValue("user_info"))
+            self.location = "center?id=" + UserInfo.id
+        } else {
+            self.location = "login"
+        }
+    }
+
+    function getCookieValue(name) {
+        let result = document.cookie.match("(^|[^;]+)\\s*" + name + "\\s*=\\s*([^;]+)")
+        return result ? result.pop() : ""
+    }
+
+    function detail(id) {
+        // 登陆拦截
+        if (checkLogin()) {
+            self.location = "detail?id=" + id
+        }
+    }
+
+    function out() {
+        console.log("退出登录")
+        document.cookie = "user_info="
+        self.location = "login"
+    }
+
+    function publish() {
+        if (checkLogin()) {
+            self.location = "publish"
+        } else {
+            self.location = "login"
+        }
+    }
+
+</script>
+</html>

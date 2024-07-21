@@ -1,0 +1,285 @@
+{% extends 'base.html' %}
+
+{% block head %}
+    <title>详情</title>
+{% endblock %}
+
+{% block contentPage %}
+    <div class="container pt-5">
+        <div class="card mx-auto" style="width:800px">
+            <img class="card-img-top" src="/media/{{ data.image }}" alt="Card image"
+                 style="width:70%">
+            <div class="card-body">
+                {% if data.type == "1" %}
+                    <h4 class="card-title">拾取物品：{{ data.name }}</h4>
+                    <p class="card-text">描述：{{ data.desc }}</p>
+                    <p class="card-text">拾取地点：{{ data.event_place }}</p>
+                    <p class="card-text">拾取时间：{{ data.event_at }}</p>
+                {% elif data.type == "2" %}
+                    <h4 class="card-title">丢失物品：{{ data.name }}</h4>
+                    <p class="card-text">描述：{{ data.desc }}</p>
+                    <p class="card-text">丢失地点：{{ data.event_place }}</p>
+                    <p class="card-text">丢失时间：{{ data.event_at }}</p>
+                {% endif %}
+                发布人：<span class="badge rounded-pill bg-primary">{{ user_info.nick_name }}</span>
+                联系方式：{{ user_info.phone }}
+                <div class="row">
+                    <div class="col text-end">
+                        {% if data.status == "0" %}
+                            <a href="" class="btn btn-warning">未完成</a>
+                            <a style="display:none;" class="btn btn-primary" id="edit"
+                               title="{{ user_info.user_id }}" onclick="edit({{ data.id }})">编辑</a>
+                            <a style="display:none;" class="btn btn-danger" id="delete"
+                               title="{{ user_info.user_id }}" data-bs-toggle="modal"
+                               data-bs-target="#exampleModal">删除</a>
+                        {% elif data.status == "1" %}
+                            <a href="" class="btn btn-success">已完成</a>
+                            <a style="display:none;" class="btn btn-danger" id="delete"
+                               title="{{ user_info.user_id }}" data-bs-toggle="modal"
+                               data-bs-target="#exampleModal">删除</a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            <div class="card-footer text-muted text-end">
+                发布时间：{{ data.created_at }}
+            </div>
+        </div>
+    </div>
+
+    <div class="container-lg mt-5" style="width: 824px">
+    <div class="card p-2">
+        <div class="card-header text-info  border-bottom border-info" style="background-color: white;">
+            留言板
+            <div class="col text-end">
+                <a href="" class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#myModal"
+                   onclick="send_release_id({{ data.id }})">留言
+                </a>
+            </div>
+        </div>
+        <div class="card-body">
+            {% if messages|length == 0 %}
+                <h2 class="text-secondary text-center mt-2">暂无评论</h2>
+            {% endif %}
+            {% for message in messages %}
+                {% if message.pid == 0 %}
+                    {% if forloop.counter == 1 %}
+                        <div class="card mt-1">
+                    {% else %}
+                        <div class="card mt-5">
+                    {% endif %}
+                <div class="card-body">
+                    <ul class="list-inline">
+                        <li class="list-inline-item text-success"
+                            style="font-size: 24px ">{{ message.user.nick_name }}</li>
+                        <li class="list-inline-item">{{ message.created_at }}</li>
+                    </ul>
+
+                    <div class="row">
+                        <div class="col-10">
+                            <p class="card-text">{{ message.content }}</p>
+                        </div>
+                        <div class="col text-end">
+                            <a href="" class="btn btn-primary btn-sm"
+                               data-bs-toggle="modal"
+                               data-bs-target="#replyModal"
+                               onclick="send_current_message({{ data.id }}, {{ message.user.id }}, {{ message.id }})">回复</a>
+                        </div>
+                    </div>
+
+                    {% for child in message.children %}
+                        <div class="card m-4">
+                            <div class="card-body">
+                                <div class="row">
+                                    <ul class="list-inline">
+                                        <li class="list-inline-item"
+                                            style="font-size: 24px">{{ child.user.nick_name }}</li>
+                                        <li class="list-inline-item text-primary">
+                                            @{{ child.to_user.nick_name }}</li>
+                                        <li class="list-inline-item text-muted">{{ child.created_at }}</li>
+                                    </ul>
+                                </div>
+                                <div class="row">
+                                    <div class="col-10">
+                                        <p class="card-text">{{ child.content }}</p>
+                                    </div>
+                                    <div class="col text-end">
+                                        <a href="" class="btn btn-primary btn-sm" data-bs-toggle="modal"
+                                           data-bs-target="#replyModal"
+                                           onclick="send_current_message({{ data.id }}, {{ child.user.id }}, {{ message.id }})"
+                                        >回复</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+
+                </div>
+                {% endif %}
+            {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- 评论模态框 -->
+    <div class="modal" id="myModal">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <!-- 模态框头部 -->
+                <div class="modal-header">
+                    <h4 class="modal-title">添加留言</h4>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+
+                <!-- 模态框内容 -->
+                <div class="modal-body">
+                        <textarea class="form-control" rows="5" id="comment" name="comment"
+                                  placeholder="留言内容..."></textarea>
+                </div>
+
+                <!-- 模态框底部 -->
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-danger" data-bs-dismiss="modal">关闭</button>
+                    <button type="submit" class="btn btn-success" onclick="submit(1)">留言</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 回复模态框 -->
+    <div class="modal" id="replyModal">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+
+                <!-- 模态框头部 -->
+                <div class="modal-header">
+                    <h4 class="modal-title">回复留言</h4>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+
+                <!-- 模态框内容 -->
+                <div class="modal-body">
+                    <textarea class="form-control" rows="5" id="reply_comment" name="text"
+                              placeholder="回复内容..."></textarea>
+                </div>
+
+                <!-- 模态框底部 -->
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-danger" data-bs-dismiss="modal">关闭</button>
+                    <button type="button" class="btn btn-primary" onclick="submit(2)">回复</button>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h1 class="modal-title fs-5" id="exampleModalLabel">删除信息</h1>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    请确定是否要删除发布的信息：
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" onclick="to_delete({{ data.id }})">确定删除</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="text/javascript">
+        let global_user_id = 0; // 当前用户id
+        let global_release_id = 0; // 发布信息id
+        let global_pid = 0; // 留言id
+        let global_to_user_id = 0; // 回复用户id
+        let tag = false;
+        // 初始化，判断当前详情的发布用户是否和登录用户相同，若相同，则展示编辑按钮
+        $(function () {
+            let UserInfo = JSON.parse(getCookieValue("user_info"))
+            if (UserInfo.id == $("#delete").attr("title")) {
+                $("#edit").attr("style", "display:inline-block");
+                $("#delete").attr("style", "display:inline-block");
+            }
+        });
+
+        function send_release_id(id) {
+            global_release_id = id
+            console.log("当前发布信息id: ", global_release_id)
+        }
+
+        function send_current_message(release_id, current_user_id, message_id) {
+            global_release_id = release_id
+            global_to_user_id = current_user_id
+            global_pid = message_id
+            console.log("当前发布信息id：", global_release_id, "当前回复的用户id：", global_to_user_id, "当前回复的消息id：", global_pid)
+        }
+
+        function submit(type) {
+            // type 为1表示评论，2表示回复
+            let comment;
+            if (type === 1) {
+                comment = document.getElementById("comment").value
+                if (comment === "") {
+                    return;
+                }
+            } else {
+                comment = document.getElementById("reply_comment").value
+                if (comment === "") {
+                    return;
+                }
+            }
+            let UserInfo = JSON.parse(getCookieValue("user_info"))
+            let data = JSON.stringify({
+                "pid": global_pid,
+                "user_id": UserInfo.id,
+                "to_user_id": global_to_user_id,
+                "release_id": global_release_id,
+                "content": comment
+            });
+            $.ajax({
+                "url": "http://127.0.0.1:8000/message/insert",
+                "method": "POST",
+                "timeout": 0,
+                "headers": {
+                    "Content-Type": "application/json"
+                },
+                "data": data,
+            }).done(function (response) {
+                console.log(response);
+                alert(response.message)
+                location.reload(true)
+            });
+        }
+
+        function edit(id) {
+            self.location = "publish?id=" + id
+        }
+
+        function to_delete(id) {
+            $.ajax({
+                "url": "http://127.0.0.1:8000/release/delete",
+                "method": "DELETE",
+                "timeout": 0,
+                "headers": {
+                    "Content-Type": "application/json"
+                },
+                "data": JSON.stringify({
+                    "id": id,
+                }),
+            }).done(function (response) {
+                console.log(response);
+                alert(response.message)
+                self.location = "found?type=1"
+            });
+        }
+
+
+    </script>
+
+{% endblock %}
+
